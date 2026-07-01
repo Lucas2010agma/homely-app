@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Homely - Organizador Inteligente de Hogar, Planos y Tareas</title>
+    <meta name="description" content="Diseña tu plano a medida, organiza tu mudanza, gestiona tareas de limpieza asignadas a habitaciones y miembros del hogar, y simula la comunicación en tiempo real con alertas y peticiones instantáneas.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Premium Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#8b5cf6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Homely">
+    <!-- Custom Style -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- App Container -->
+    <div class="app-container">
+        
+        <!-- Header / Control Bar -->
+        <header class="app-header">
+            <div class="header-logo">
+                <div class="logo-icon">
+                    <i class="fa-solid fa-house-chimney-window"></i>
+                </div>
+                <div class="logo-text">
+                    <h1>Homely</h1>
+                    <span>Organizador de Hogar</span>
+                </div>
+            </div>
+            
+            <!-- Quick Link / Code Status -->
+            <div class="sync-status" id="syncStatusBadge">
+                <i class="fa-solid fa-circle-nodes"></i>
+                <span id="syncCodeText">Código: HOME-9842</span>
+            </div>
+
+            <!-- Profile Selector (Simulador de Dispositivo) -->
+            <div class="header-profile-selector">
+                <div class="simulator-label">
+                    <i class="fa-solid fa-microchip"></i>
+                    <span>Simular Dispositivo:</span>
+                </div>
+                <div class="profile-dropdown">
+                    <button class="profile-current-btn" id="currentProfileBtn">
+                        <img src="https://api.dicebear.com/7.x/adventurer/svg?seed=madre" alt="Avatar" id="currentProfileAvatar" class="avatar-img">
+                        <span id="currentProfileName">Madre (Admin)</span>
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+                    <div class="profile-dropdown-content" id="profileDropdownList">
+                        <!-- Profiles will be populated dynamically -->
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Workspace Layout -->
+        <div class="app-workspace">
+            
+            <!-- Sidebar Navigation -->
+            <aside class="app-sidebar">
+                <nav class="sidebar-nav">
+                    <button class="nav-item active" data-tab="dashboard" id="tab-dashboard">
+                        <i class="fa-solid fa-chart-pie"></i>
+                        <span>Panel</span>
+                    </button>
+                    <button class="nav-item" data-tab="planner" id="tab-planner">
+                        <i class="fa-solid fa-compass-drafting"></i>
+                        <span>Diseñador 2D</span>
+                    </button>
+                    <button class="nav-item" data-tab="tasks" id="tab-tasks">
+                        <i class="fa-solid fa-list-check"></i>
+                        <span>Tareas Limpieza</span>
+                    </button>
+                    <button class="nav-item" data-tab="moving" id="tab-moving">
+                        <i class="fa-solid fa-truck-ramp-box"></i>
+                        <span>Mudanza</span>
+                    </button>
+                    <button class="nav-item" data-tab="requests" id="tab-requests">
+                        <i class="fa-solid fa-hand-holding-hand"></i>
+                        <span>Solicitudes</span>
+                        <span class="badge" id="requestsCountBadge" style="display: none;">0</span>
+                    </button>
+                    <button class="nav-item" data-tab="settings" id="tab-settings">
+                        <i class="fa-solid fa-users-gear"></i>
+                        <span>Hogar y Código</span>
+                    </button>
+                </nav>
+
+                <!-- Active Notification Log in Sidebar -->
+                <div class="sidebar-notifications">
+                    <div class="notif-header">
+                        <h4>Notificaciones</h4>
+                        <button class="clear-notif-btn" id="clearNotifBtn">Limpiar</button>
+                    </div>
+                    <div class="notif-list" id="sidebarNotificationsList">
+                        <div class="empty-notif">No hay notificaciones recientes</div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Content Area -->
+            <main class="app-main-content">
+
+                <!-- TAB: DASHBOARD -->
+                <section class="tab-content active" id="content-dashboard">
+                    <div class="welcome-banner">
+                        <div class="welcome-text">
+                            <h2>¡Hola, <span id="welcomeUserName">Madre</span>! 👋</h2>
+                            <p>Bienvenido al organizador de tu hogar. Estás sincronizado con el código <strong id="welcomeSyncCode">HOME-9842</strong>.</p>
+                        </div>
+                        <div class="welcome-stats">
+                            <div class="stat-mini">
+                                <span class="stat-val" id="statPendingTasks">0</span>
+                                <span class="stat-lbl">Tareas Pendientes</span>
+                            </div>
+                            <div class="stat-separator"></div>
+                            <div class="stat-mini">
+                                <span class="stat-val" id="statMovingProgress">0%</span>
+                                <span class="stat-lbl">Mudanza</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dashboard Grid -->
+                    <div class="dashboard-grid">
+                        
+                        <!-- Mini Floor Plan Preview / Quick Navigation -->
+                        <div class="dashboard-card card-large">
+                            <div class="card-header">
+                                <h3><i class="fa-solid fa-map"></i> Vista Rápida de la Casa</h3>
+                                <button class="card-action-btn" onclick="switchTab('planner')">Ir al Diseñador</button>
+                            </div>
+                            <div class="card-body">
+                                <div class="dashboard-plan-preview" id="dashboardPlanPreview">
+                                    <!-- Dynamic layout preview -->
+                                    <div class="no-plan-prompt">
+                                        <i class="fa-solid fa-pencil"></i>
+                                        <p>No has diseñado ninguna habitación aún.</p>
+                                        <button class="btn btn-primary" onclick="switchTab('planner')">Empezar a Diseñar</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Active Request Simulator Widget -->
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3><i class="fa-solid fa-bell"></i> Peticiones al Instante</h3>
+                                <button class="card-action-btn" onclick="switchTab('requests')">Ver todo</button>
+                            </div>
+                            <div class="card-body">
+                                <div class="quick-request-widget" id="quickRequestWidget">
+                                    <p class="widget-desc">Pide ayuda a otros miembros del hogar en tiempo real.</p>
+                                    <div class="quick-request-form">
+                                        <label for="widgetRequestMaterial">¿Qué necesitas?</label>
+                                        <input type="text" id="widgetRequestMaterial" placeholder="Ej: Harina, Sal, Tijeras, Ayuda..." class="input-field">
+                                        
+                                        <div class="form-row-2">
+                                            <div>
+                                                <label for="widgetRequestRoom">¿En qué habitación?</label>
+                                                <select id="widgetRequestRoom" class="select-field">
+                                                    <!-- Room options -->
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label for="widgetRequestMember">¿A quién le pides?</label>
+                                                <select id="widgetRequestMember" class="select-field">
+                                                    <!-- Member options -->
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <button class="btn btn-accent btn-full" id="sendWidgetRequestBtn">
+                                            <i class="fa-solid fa-paper-plane"></i> Enviar Petición
+                                        </button>
+                                    </div>
+                                    <div id="dashboardActiveRequestStatus" class="active-req-status-box" style="display: none;">
+                                        <!-- Real-time status update -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Urgent Tasks Widget -->
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3><i class="fa-solid fa-triangle-exclamation"></i> Tareas de Limpieza Urgentes</h3>
+                                <button class="card-action-btn" onclick="switchTab('tasks')">Administrar</button>
+                            </div>
+                            <div class="card-body">
+                                <div class="urgent-tasks-list" id="dashboardUrgentTasksList">
+                                    <div class="empty-list">No hay tareas pendientes</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quick Move/Relocation status -->
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3><i class="fa-solid fa-boxes-packing"></i> Estado de la Mudanza</h3>
+                                <button class="card-action-btn" onclick="switchTab('moving')">Detalles</button>
+                            </div>
+                            <div class="card-body">
+                                <div class="moving-widget-body">
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar-fill" id="movingWidgetProgressBar" style="width: 0%;"></div>
+                                    </div>
+                                    <div class="moving-stats-row">
+                                        <div>
+                                            <span class="moving-stat-num" id="movingWidgetPacked">0</span>
+                                            <span class="moving-stat-text">Embalado</span>
+                                        </div>
+                                        <div>
+                                            <span class="moving-stat-num" id="movingWidgetUnpacked">0</span>
+                                            <span class="moving-stat-text">Desembalado</span>
+                                        </div>
+                                        <div>
+                                            <span class="moving-stat-num" id="movingWidgetTotal">0</span>
+                                            <span class="moving-stat-text">Cajas Totales</span>
+                                        </div>
+                                    </div>
+                                    <div class="quick-add-box">
+                                        <input type="text" id="quickBoxName" placeholder="Nueva caja..." class="input-field-sm">
+                                        <button class="btn btn-sm" id="quickAddBoxBtn"><i class="fa-solid fa-plus"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAB: PLANNER (2D DESIGNER) -->
+                <section class="tab-content" id="content-planner">
+                    <div class="planner-layout">
+                        <!-- Canvas / Graphic View -->
+                        <div class="planner-canvas-container">
+                            <div class="canvas-header-bar">
+                                <div class="canvas-title">
+                                    <h3>Lienzo Interactivo de la Casa</h3>
+                                    <p>Arrastra las habitaciones para distribuirlas. Haz clic en una habitación para añadir muebles o plantas.</p>
+                                </div>
+                                <div class="canvas-controls">
+                                    <button class="btn btn-sm btn-outline" id="clearPlanBtn"><i class="fa-solid fa-trash-can"></i> Limpiar Todo</button>
+                                    <button class="btn btn-sm btn-outline" id="demoPlanBtn"><i class="fa-solid fa-wand-magic-sparkles"></i> Cargar Demo</button>
+                                </div>
+                            </div>
+                            <!-- The Grid Workspace -->
+                            <div class="canvas-workspace" id="canvasWorkspace">
+                                <div class="grid-helper"></div>
+                                <div class="workspace-scale-legend">
+                                    <div class="scale-bar"></div>
+                                    <span>Escala: 1m = 40px</span>
+                                </div>
+                                <!-- Habitaciones y Muebles renderizados dinámicamente -->
+                            </div>
+                        </div>
+
+                        <!-- Sidebar Editor Panel -->
+                        <div class="planner-editor-sidebar">
+                            
+                            <!-- Section: Rooms Manager -->
+                            <div class="editor-section">
+                                <h3><i class="fa-solid fa-door-open"></i> Habitaciones</h3>
+                                <form id="addRoomForm" class="editor-form">
+                                    <div class="form-group">
+                                        <label for="roomName">Nombre de Estancia</label>
+                                        <input type="text" id="roomName" placeholder="Ej: Cocina, Dormitorio..." required class="input-field">
+                                    </div>
+                                    <div class="form-row-2">
+                                        <div class="form-group">
+                                            <label for="roomWidth">Ancho (m)</label>
+                                            <input type="number" id="roomWidth" value="4" min="1" max="15" step="0.5" class="input-field">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="roomHeight">Largo (m)</label>
+                                            <input type="number" id="roomHeight" value="3.5" min="1" max="15" step="0.5" class="input-field">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="roomColor">Color Temático</label>
+                                        <div class="color-picker-grid">
+                                            <label class="color-opt color-blue"><input type="radio" name="roomColor" value="blue" checked></label>
+                                            <label class="color-opt color-green"><input type="radio" name="roomColor" value="green"></label>
+                                            <label class="color-opt color-purple"><input type="radio" name="roomColor" value="purple"></label>
+                                            <label class="color-opt color-red"><input type="radio" name="roomColor" value="red"></label>
+                                            <label class="color-opt color-yellow"><input type="radio" name="roomColor" value="yellow"></label>
+                                            <label class="color-opt color-teal"><input type="radio" name="roomColor" value="teal"></label>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary btn-full">
+                                        <i class="fa-solid fa-plus"></i> Añadir Habitación
+                                    </button>
+                                </form>
+                            </div>
+
+                            <!-- Section: Furniture & Plants Catalog -->
+                            <div class="editor-section" id="furnitureCatalogSection" style="display: none;">
+                                <div class="section-title-row">
+                                    <h3><i class="fa-solid fa-couch"></i> Añadir a: <span id="selectedRoomName">Ninguno</span></h3>
+                                    <button class="close-selection-btn" id="deselectRoomBtn"><i class="fa-solid fa-xmark"></i></button>
+                                </div>
+                                
+                                <div class="catalog-tabs">
+                                    <button class="catalog-tab-btn active" data-catalog="furniture">Muebles</button>
+                                    <button class="catalog-tab-btn" data-catalog="plants">Plantas 🌿</button>
+                                </div>
+
+                                <!-- Catalog List for Furniture -->
+                                <div class="catalog-list active" id="catalogFurnitureList">
+                                    <!-- Populated dynamically (bed, sofa, table, etc.) -->
+                                </div>
+
+                                <!-- Catalog List for Plants -->
+                                <div class="catalog-list" id="catalogPlantsList">
+                                    <!-- Populated dynamically (fern, cactus, ficus, etc.) -->
+                                </div>
+                            </div>
+
+                            <!-- Section: Item Inspector / Editor -->
+                            <div class="editor-section" id="itemInspectorSection" style="display: none;">
+                                <h3><i class="fa-solid fa-sliders"></i> Ajustar Elemento</h3>
+                                <div class="inspector-details">
+                                    <p class="inspector-item-title" id="inspectorItemTitle">Sofá Clásico</p>
+                                    <div class="form-row-2">
+                                        <div class="form-group">
+                                            <label for="inspectorItemWidth">Ancho (m)</label>
+                                            <input type="number" id="inspectorItemWidth" min="0.1" max="10" step="0.1" class="input-field">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="inspectorItemHeight">Largo (m)</label>
+                                            <input type="number" id="inspectorItemHeight" min="0.1" max="10" step="0.1" class="input-field">
+                                        </div>
+                                    </div>
+                                    <div class="form-row-2">
+                                        <div class="form-group">
+                                            <label for="inspectorItemRotation">Rotar (°)</label>
+                                            <input type="range" id="inspectorItemRotation" min="0" max="360" step="15" value="0" class="slider-field">
+                                            <span id="rotationValueText">0°</span>
+                                        </div>
+                                    </div>
+                                    <div class="form-row-2">
+                                        <button class="btn btn-outline" id="rotate90Btn"><i class="fa-solid fa-rotate-right"></i> +90°</button>
+                                        <button class="btn btn-danger" id="deleteItemBtn"><i class="fa-solid fa-trash"></i> Eliminar</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAB: TASKS (CLEANING TASKS) -->
+                <section class="tab-content" id="content-tasks">
+                    <div class="page-title-row">
+                        <div>
+                            <h2>Gestor de Tareas de Limpieza</h2>
+                            <p>Asigna tareas a habitaciones del plano y miembros del hogar para mantener tu casa impecable.</p>
+                        </div>
+                    </div>
+
+                    <div class="tasks-layout">
+                        <!-- Left Panel: Create Task -->
+                        <div class="tasks-form-panel">
+                            <h3><i class="fa-solid fa-circle-plus"></i> Nueva Tarea</h3>
+                            <form id="addTaskForm" class="editor-form">
+                                <div class="form-group">
+                                    <label for="taskTitle">¿Qué hay que limpiar/hacer?</label>
+                                    <input type="text" id="taskTitle" placeholder="Ej: Fregar platos, Limpiar cristales..." required class="input-field">
+                                </div>
+                                <div class="form-group">
+                                    <label for="taskRoom">Habitación / Estancia</label>
+                                    <select id="taskRoom" required class="select-field">
+                                        <option value="" disabled selected>Selecciona una estancia...</option>
+                                        <!-- Rooms populated dynamically -->
+                                    </select>
+                                </div>
+                                <div class="form-row-2">
+                                    <div class="form-group">
+                                        <label for="taskAssignee">Asignar a:</label>
+                                        <select id="taskAssignee" required class="select-field">
+                                            <!-- Members populated dynamically -->
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="taskPriority">Prioridad</label>
+                                        <select id="taskPriority" class="select-field">
+                                            <option value="baja">Baja</option>
+                                            <option value="media" selected>Media</option>
+                                            <option value="alta">Alta 🚨</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-full">
+                                    <i class="fa-solid fa-paper-plane"></i> Asignar y Enviar Alerta
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Right Panel: Task List -->
+                        <div class="tasks-list-panel">
+                            <div class="list-filters-bar">
+                                <h3>Tareas en la Unidad</h3>
+                                <div class="filter-buttons">
+                                    <button class="filter-btn active" data-filter="all">Todas</button>
+                                    <button class="filter-btn" data-filter="pending">Pendientes</button>
+                                    <button class="filter-btn" data-filter="completed">Completadas</button>
+                                </div>
+                            </div>
+
+                            <div class="tasks-table-container">
+                                <table class="tasks-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Estado</th>
+                                            <th>Tarea</th>
+                                            <th>Estancia</th>
+                                            <th>Asignado A</th>
+                                            <th>Prioridad</th>
+                                            <th>Acción</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tasksTableBody">
+                                        <!-- Populated dynamically -->
+                                    </tbody>
+                                </table>
+                                <div class="empty-state-box" id="tasksEmptyState" style="display: none;">
+                                    <i class="fa-solid fa-list-check"></i>
+                                    <p>No hay tareas registradas. ¡Disfruta de la casa limpia!</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAB: MOVING PLANNER -->
+                <section class="tab-content" id="content-moving">
+                    <div class="page-title-row">
+                        <div>
+                            <h2>Planificador de Mudanza Inteligente</h2>
+                            <p>Organiza cajas, detalla su contenido, asígnalas a su habitación de destino y lleva un control del desempaque.</p>
+                        </div>
+                        <button class="btn btn-primary" id="openAddBoxModalBtn">
+                            <i class="fa-solid fa-box-archive"></i> Crear Nueva Caja
+                        </button>
+                    </div>
+
+                    <!-- Progress Header -->
+                    <div class="moving-summary-strip">
+                        <div class="strip-stats">
+                            <div class="strip-stat">
+                                <span class="num" id="movingTotalBoxes">0</span>
+                                <span class="label">Cajas Totales</span>
+                            </div>
+                            <div class="strip-stat">
+                                <span class="num text-warning" id="movingPackedBoxes">0</span>
+                                <span class="label">Embaladas</span>
+                            </div>
+                            <div class="strip-stat">
+                                <span class="num text-success" id="movingUnpackedBoxes">0</span>
+                                <span class="label">Desembaladas</span>
+                            </div>
+                        </div>
+                        <div class="strip-progress">
+                            <div class="progress-info">
+                                <span>Progreso general de desempaque:</span>
+                                <strong id="movingProgressPercent">0%</strong>
+                            </div>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar-fill bg-success" id="movingMainProgressBar" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Boxes Workspace Grid -->
+                    <div class="boxes-grid" id="movingBoxesGrid">
+                        <!-- Populated dynamically -->
+                        <div class="empty-state-box">
+                            <i class="fa-solid fa-boxes-packing"></i>
+                            <p>Aún no has añadido ninguna caja a la mudanza. Haz clic en "Crear Nueva Caja".</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAB: MATERIAL REQUESTER -->
+                <section class="tab-content" id="content-requests">
+                    <div class="page-title-row">
+                        <div>
+                            <h2>Solicitudes Rápidas de Materiales</h2>
+                            <p>Pide ingredientes o ayuda a otros miembros del hogar que estén en otras habitaciones y realiza un seguimiento visual.</p>
+                        </div>
+                    </div>
+
+                    <div class="requests-layout">
+                        <!-- Left Panel: Create Request -->
+                        <div class="requests-form-panel">
+                            <h3><i class="fa-solid fa-microphone-lines"></i> Enviar Petición Directa</h3>
+                            <form id="addRequestForm" class="editor-form">
+                                <div class="form-group">
+                                    <label for="requestMaterial">¿Qué objeto/ingrediente necesitas?</label>
+                                    <input type="text" id="requestMaterial" placeholder="Ej: Harina de trigo, Martillo, Botella de agua..." required class="input-field">
+                                </div>
+                                <div class="form-row-2">
+                                    <div class="form-group">
+                                        <label for="requestRoom">¿En qué estancia estás tú?</label>
+                                        <select id="requestRoom" required class="select-field">
+                                            <option value="" disabled selected>Selecciona tu ubicación...</option>
+                                            <!-- Rooms -->
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="requestMember">¿A quién se lo pides?</label>
+                                        <select id="requestMember" required class="select-field">
+                                            <!-- Members -->
+                                        </select>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-accent btn-full">
+                                    <i class="fa-solid fa-paper-plane"></i> Enviar Petición Instantánea
+                                </button>
+                            </form>
+                            
+                            <!-- Help Alert -->
+                            <div class="help-alert-box">
+                                <i class="fa-solid fa-circle-info"></i>
+                                <p><strong>Cómo probar:</strong> Envía una petición a otro miembro (ej. "Hijo"). Luego, usa el selector de la esquina superior derecha para cambiar el dispositivo simulado al "Hijo" y ver cómo responde en tiempo real.</p>
+                            </div>
+                        </div>
+
+                        <!-- Right Panel: Live Feed -->
+                        <div class="requests-list-panel">
+                            <h3>Canal de Peticiones del Hogar</h3>
+                            <div class="requests-feed" id="requestsFeedList">
+                                <!-- Requests populated dynamically -->
+                                <div class="empty-state-box">
+                                    <i class="fa-solid fa-satellite-dish"></i>
+                                    <p>No hay solicitudes activas en este momento.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAB: SETTINGS & HOUSEHOLD SYNC -->
+                <section class="tab-content" id="content-settings">
+                    <div class="settings-layout">
+                        <!-- Left Panel: Family Link Code -->
+                        <div class="settings-card">
+                            <div class="card-header">
+                                <h3><i class="fa-solid fa-network-wired"></i> Vincular Dispositivos del Hogar</h3>
+                            </div>
+                            <div class="card-body">
+                                <p>Comparte este código con los demás miembros de tu familia para que puedan ver los mismos planos, cajas de mudanza y tareas de limpieza en tiempo real.</p>
+                                
+                                <div class="sync-code-generator">
+                                    <div class="code-box" id="settingsSyncCodeDisplay">HOME-9842</div>
+                                    <button class="btn btn-outline" id="regenerateCodeBtn"><i class="fa-solid fa-arrows-rotate"></i> Regenerar Código</button>
+                                </div>
+
+                                <div class="sync-connect-form">
+                                    <label for="connectSyncCodeInput">¿Unirte a otro Hogar? Introduce su código:</label>
+                                    <div class="form-row-btn">
+                                        <input type="text" id="connectSyncCodeInput" placeholder="Ej: HOME-1234" class="input-field">
+                                        <button class="btn btn-primary" id="connectCodeBtn">Vincular</button>
+                                    </div>
+                                    <span class="status-msg" id="connectStatusMsg"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Panel: Manage Family Members -->
+                        <div class="settings-card">
+                            <div class="card-header">
+                                <h3><i class="fa-solid fa-users"></i> Miembros del Hogar</h3>
+                            </div>
+                            <div class="card-body">
+                                <p>Añade y edita los perfiles que forman parte de esta vivienda.</p>
+                                
+                                <div class="family-members-list" id="settingsMembersList">
+                                    <!-- Populated dynamically -->
+                                </div>
+
+                                <form id="addFamilyMemberForm" class="add-member-form">
+                                    <label for="newMemberName">Añadir nuevo miembro:</label>
+                                    <div class="form-row-btn">
+                                        <input type="text" id="newMemberName" placeholder="Ej: Abuelo, Hermana..." required class="input-field">
+                                        <button type="submit" class="btn btn-accent"><i class="fa-solid fa-plus"></i></button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- MODAL: ADD BOX FOR MOVING -->
+    <div class="modal-overlay" id="addBoxModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-box-archive"></i> Crear Nueva Caja de Mudanza</h3>
+                <button class="close-modal-btn" onclick="closeModal('addBoxModal')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="createBoxForm" class="editor-form">
+                    <div class="form-group">
+                        <label for="boxName">Nombre/Número de Caja</label>
+                        <input type="text" id="boxName" placeholder="Ej: Caja 12 - Utensilios de Cocina" required class="input-field">
+                    </div>
+                    <div class="form-group">
+                        <label for="boxContents">Detalle del Contenido</label>
+                        <textarea id="boxContents" placeholder="Ej: Sartenes, platos de cerámica, tazas, cubiertos..." class="textarea-field" rows="3"></textarea>
+                    </div>
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label for="boxDestRoom">Estancia de Destino</label>
+                            <select id="boxDestRoom" required class="select-field">
+                                <option value="" disabled selected>Selecciona estancia...</option>
+                                <!-- Rooms options -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="boxStatus">Estado Inicial</label>
+                            <select id="boxStatus" class="select-field">
+                                <option value="packed">Embalada (Pendiente)</option>
+                                <option value="unpacked">Desembalada (Colocada)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Color de Etiqueta (Organización)</label>
+                        <div class="box-color-picker">
+                            <label class="box-color-opt" style="background-color: #ef4444;"><input type="radio" name="boxColor" value="#ef4444" checked></label>
+                            <label class="box-color-opt" style="background-color: #f59e0b;"><input type="radio" name="boxColor" value="#f59e0b"></label>
+                            <label class="box-color-opt" style="background-color: #10b981;"><input type="radio" name="boxColor" value="#10b981"></label>
+                            <label class="box-color-opt" style="background-color: #3b82f6;"><input type="radio" name="boxColor" value="#3b82f6"></label>
+                            <label class="box-color-opt" style="background-color: #8b5cf6;"><input type="radio" name="boxColor" value="#8b5cf6"></label>
+                            <label class="box-color-opt" style="background-color: #ec4899;"><input type="radio" name="boxColor" value="#ec4899"></label>
+                        </div>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-outline" onclick="closeModal('addBoxModal')">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Crear Caja</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: ALERT FOR SIMULATED DEVICE (E.G. MOTHER ALERTS SON) -->
+    <div class="modal-overlay" id="taskAlertModal">
+        <div class="modal-card modal-alert-card animate-pulse-border">
+            <div class="modal-header alert-header">
+                <h3><span id="alertModalTitleIcon"><i class="fa-solid fa-bell"></i></span> <span id="alertModalTitle">¡Aviso de Alerta!</span></h3>
+                <button class="close-modal-btn" onclick="closeModal('taskAlertModal')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body alert-body">
+                <div class="alert-icon-container">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <div class="alert-content">
+                    <p class="alert-message" id="alertModalMessage">Se te ha asignado una tarea en una estancia.</p>
+                    <div class="alert-details-box">
+                        <div class="alert-detail-item">
+                            <span class="label">Tarea:</span>
+                            <strong id="alertModalTaskName">Limpiar polvo</strong>
+                        </div>
+                        <div class="alert-detail-item">
+                            <span class="label">Estancia:</span>
+                            <strong id="alertModalTaskRoom">Dormitorio Principal</strong>
+                        </div>
+                        <div class="alert-detail-item">
+                            <span class="label">Asignado por:</span>
+                            <span id="alertModalSender">Madre</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-outline" onclick="closeModal('taskAlertModal')">Entendido</button>
+                    <button type="button" class="btn btn-success" id="alertModalCompleteBtn">Marcar como Completada</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AUDIO FOR NOTIFICATIONS (SIMULATED VIA WEB AUDIO API) -->
+    
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- App Script -->
+    <script src="app.js"></script>
+    <!-- PWA Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('Homely PWA: Service Worker registrado ✅', reg.scope))
+                    .catch(err => console.warn('Homely PWA: Error al registrar SW', err));
+            });
+        }
+    </script>
+</body>
+</html>
